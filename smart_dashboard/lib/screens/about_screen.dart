@@ -30,13 +30,13 @@ class AboutScreen extends StatelessWidget {
           _AboutCard(
             icon: Icons.favorite,
             title: 'Core Values',
-            text: 'Love of God\n'
-                'Perseverance\n'
-                'Unity\n'
-                'Nationalism\n'
-                'Justice\n'
-                'Professional Integrity\n'
-                'Leadership',
+            text: 'L - Love of God\n'
+                'P - Perseverance\n'
+                'U - Unity\n'
+                'N - Nationalism\n'
+                'J - Justice\n'
+                'P - Professional Integrity\n'
+                'L - Leadership',
           ),
         ],
       ),
