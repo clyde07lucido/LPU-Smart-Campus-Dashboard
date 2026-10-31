@@ -11,11 +11,13 @@ import '../widgets/stat_card.dart';
 class AnalyticsScreen extends StatelessWidget {
   final Future<List<dynamic>> future;
   final VoidCallback onRetry;
+  final List<Map<String, String>> registered;
 
   const AnalyticsScreen({
     super.key,
     required this.future,
     required this.onRetry,
+    required this.registered,
   });
 
   @override
@@ -104,7 +106,7 @@ class AnalyticsScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${p.students}',
+                          '${p.totalWith(registered)}',
                           style: const TextStyle(
                             fontSize: 30,
                             fontWeight: FontWeight.bold,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/programme.dart';
+import '../services/storage_service.dart';
 import '../utils/colors.dart';
 import '../widgets/centered_list.dart';
 import '../widgets/section_title.dart';
@@ -18,7 +19,11 @@ InputDecoration inputDecoration(String label, IconData icon) {
 
 /// Part 3 - Student Registration Form.
 class RegistrationScreen extends StatefulWidget {
-  const RegistrationScreen({super.key});
+  // Only used when editing: the saved student and its position in the list.
+  final Map<String, String>? student;
+  final int? index;
+
+  const RegistrationScreen({super.key, this.student, this.index});
 
   @override
   State<RegistrationScreen> createState() => _RegistrationScreenState();
@@ -46,6 +51,23 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Editing: fill the form with the saved details.
+    final s = widget.student;
+    if (s != null) {
+      nameController.text = s['Name']!;
+      idController.text = s['ID']!;
+      emailController.text = s['Email']!;
+      contactController.text = s['Contact'] == 'N/A' ? '' : s['Contact']!;
+      addressController.text = s['Address'] == 'N/A' ? '' : s['Address']!;
+      program = s['Program'];
+      yearLevel = s['Year'];
+    }
+  }
+
+  
+  @override
   void dispose() {
     for (final c in [
       nameController,
@@ -64,7 +86,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   }
 
   // Exercise 3 - validation with SnackBar.
-  void submit() {
+  Future<void> submit() async {
     if (nameController.text.trim().isEmpty ||
         idController.text.trim().isEmpty ||
         emailController.text.trim().isEmpty ||
@@ -76,6 +98,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
     if (!emailController.text.contains('@')) {
       showMessage('Please enter a valid email address.');
+      return;
+    }
+
+    // The saved list can hold many students, so each ID must be unique.
+    final students = await loadStudents();
+    if (!mounted) return;
+        bool duplicate = false;
+    for (int i = 0; i < students.length; i++) {
+      if (i != widget.index && students[i]['ID'] == idController.text.trim()) {
+        duplicate = true;
+      }
+    }
+    if (duplicate) {
+      showMessage('This Student ID is already registered.');
       return;
     }
 
@@ -91,6 +127,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           yearLevel: yearLevel!,
           contact: contactController.text.trim(),
           address: addressController.text.trim(),
+          editIndex: widget.index,
+          
         ),
       ),
     );
@@ -148,7 +186,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Student Registration')),
+      appBar: AppBar(
+        title: Text(
+          widget.student == null ? 'Student Registration' : 'Edit Student',
+        ),
+      ),
       body: CenteredList(
         children: [
           const SectionTitle('Required Information'),
@@ -186,7 +228,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           ),
           buildField('Address', Icons.home, addressController, lines: 2),
           const SizedBox(height: 8),
-          ElevatedButton(onPressed: submit, child: const Text('Submit')),
+          ElevatedButton(
+            onPressed: submit,
+            child: const Text('Review & Continue'),
+          ),
         ],
       ),
     );

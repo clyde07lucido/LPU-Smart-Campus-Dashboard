@@ -13,6 +13,7 @@ class SummaryScreen extends StatelessWidget {
   final String yearLevel;
   final String contact;
   final String address;
+  final int? editIndex; // set when editing a saved student
 
   const SummaryScreen({
     super.key,
@@ -23,9 +24,10 @@ class SummaryScreen extends StatelessWidget {
     required this.yearLevel,
     this.contact = '',
     this.address = '',
+    this.editIndex,
   });
 
-  // One map feeds both the Cards on screen and the exported text file.
+  // One map feeds the Cards on screen, the saved list and the text file.
   Map<String, String> get details => {
         'Name': studentName,
         'ID': studentId,
@@ -36,21 +38,20 @@ class SummaryScreen extends StatelessWidget {
         'Address': address.isEmpty ? 'N/A' : address,
       };
 
-  // Parts 5 and 6 - save to SharedPreferences, then create student_info.txt.
+  // Parts 5 and 6 - add to SharedPreferences, then update student_info.txt.
   Future<void> saveAndExport(BuildContext context) async {
-    final lines = details.entries.map((e) => '${e.key}: ${e.value}');
-    final text = 'STUDENT INFORMATION\n\n${lines.join('\n')}';
-
     try {
-      await saveStudent(studentName, studentId, program);
-      final file = await exportStudentFile(text);
+      if (editIndex == null) {
+        await saveStudent(details);
+      } else {
+        await updateStudent(editIndex!, details);
+      }
+      final file = await exportStudentFile();
 
       if (!context.mounted) return;
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (_) => FileStoredScreen(path: file.path, content: text),
-        ),
+        MaterialPageRoute(builder: (_) => FileStoredScreen(path: file.path)),
       );
     } catch (error) {
       if (!context.mounted) return;
@@ -63,7 +64,7 @@ class SummaryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Summary')),
+      appBar: AppBar(title: const Text('Review Registration')),
       body: CenteredList(
         children: [
           Center(
@@ -108,7 +109,7 @@ class SummaryScreen extends StatelessWidget {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () => saveAndExport(context),
-                  child: const Text('Save & Export'),
+                  child: const Text('Save Student'),
                 ),
               ),
             ],

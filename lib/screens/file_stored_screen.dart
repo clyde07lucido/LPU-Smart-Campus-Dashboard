@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import '../widgets/centered_list.dart';
 import '../widgets/icon_badge.dart';
@@ -5,19 +7,16 @@ import '../widgets/icon_badge.dart';
 /// Last step of the navigation flow: File Storage Confirmation.
 class FileStoredScreen extends StatelessWidget {
   final String path;
-  final String content;
 
-  const FileStoredScreen({
-    super.key,
-    required this.path,
-    required this.content,
-  });
+  const FileStoredScreen({super.key, required this.path});
 
   @override
   Widget build(BuildContext context) {
+    final bool inDocuments = path.startsWith('/storage/emulated/0/Documents');
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('File Storage Confirmation'),
+        title: const Text('Registration Saved'),
         automaticallyImplyLeading: false,
       ),
       body: CenteredList(
@@ -33,14 +32,18 @@ class FileStoredScreen extends StatelessWidget {
           const Card(
             child: ListTile(
               leading: IconBadge(Icons.storage),
-              title: Text('SharedPreferences'),
-              subtitle: Text('Name, ID and Program were saved on this device.'),
+              title: Text('Saved in SharedPreferences'),
+              subtitle: Text('The student was added to the list on this phone.'),
             ),
           ),
           Card(
             child: ListTile(
               leading: const IconBadge(Icons.folder),
-              title: const Text('File Location'),
+              title: Text(
+                inDocuments
+                    ? 'File saved in your Documents folder'
+                    : 'Saved in the app folder (Documents was not writable)',
+              ),
               subtitle: SelectableText(path),
             ),
           ),
@@ -48,7 +51,16 @@ class FileStoredScreen extends StatelessWidget {
             child: ListTile(
               leading: const IconBadge(Icons.description),
               title: const Text('student_info.txt'),
-              subtitle: Text(content),
+              // Reads the file back to prove it was really created.
+              subtitle: FutureBuilder<String>(
+                future: File(path).readAsString(),
+                builder: (context, snapshot) => Text(
+                  snapshot.data ??
+                      (snapshot.hasError
+                          ? 'Could not read the file.'
+                          : 'Reading file...'),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 8),

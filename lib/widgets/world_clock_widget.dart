@@ -20,6 +20,13 @@ class _WorldClockWidgetState extends State<WorldClockWidget> {
     {'name': 'Manila', 'zone': 'Asia/Manila'},
     {'name': 'Tokyo', 'zone': 'Asia/Tokyo'},
     {'name': 'New York', 'zone': 'America/New_York'},
+    {'name': 'London', 'zone': 'Europe/London'},
+    {'name': 'Paris', 'zone': 'Europe/Paris'},
+    {'name': 'Dubai', 'zone': 'Asia/Dubai'},
+    {'name': 'Sydney', 'zone': 'Australia/Sydney'},
+    {'name': 'Los Angeles', 'zone': 'America/Los_Angeles'},
+    {'name': 'Seoul', 'zone': 'Asia/Seoul'},
+    {'name': 'Singapore', 'zone': 'Asia/Singapore'},
   ];
 
   @override

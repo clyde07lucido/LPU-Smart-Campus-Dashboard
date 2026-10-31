@@ -1,37 +1,60 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Part 5 - save the student's name, ID and program on the device.
-Future<void> saveStudent(String name, String id, String program) async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString('student_name', name);
-  await prefs.setString('student_id', id);
-  await prefs.setString('program', program);
+const String _studentsKey = 'students';
+
+// Copy of the saved list (each student is stored as one JSON string).
+List<String> _savedList(SharedPreferences prefs) {
+  return [...(prefs.getStringList(_studentsKey) ?? <String>[])];
 }
 
-/// Part 5 - read the saved data back (still there after the app restarts).
-/// Returns an empty map when nothing has been saved yet.
-Future<Map<String, String>> loadStudent() async {
+/// Part 5 - read every saved student (still there after the app restarts).
+Future<List<Map<String, String>>> loadStudents() async {
   final prefs = await SharedPreferences.getInstance();
-  final name = prefs.getString('student_name');
-  if (name == null) return {};
-
-  return {
-    'Name': name,
-    'Student ID': prefs.getString('student_id') ?? '',
-    'Program': prefs.getString('program') ?? '',
-  };
+  return [
+    for (final item in _savedList(prefs))
+      Map<String, String>.from(jsonDecode(item)),
+  ];
 }
 
-/// Part 6 - write student_info.txt and return the created file.
-/// The external app folder can be opened from a file manager / Device File
-/// Explorer; if it is unavailable we fall back to the documents folder.
-Future<File> exportStudentFile(String text) async {
-  final directory = await getExternalStorageDirectory() ??
-      await getApplicationDocumentsDirectory();
+/// Part 5 - ADD a student to the saved list (older students are kept).
+Future<void> saveStudent(Map<String, String> student) async {
+  final prefs = await SharedPreferences.getInstance();
+  final saved = _savedList(prefs)..add(jsonEncode(student));
+  await prefs.setStringList(_studentsKey, saved);
+}
 
-  final file = File('${directory.path}/student_info.txt');
-  return file.writeAsString(text);
+/// Replace one saved student with the edited details.
+Future<void> updateStudent(int index, Map<String, String> student) async {
+  final prefs = await SharedPreferences.getInstance();
+  final saved = _savedList(prefs);
+  saved[index] = jsonEncode(student);
+  await prefs.setStringList(_studentsKey, saved);
+}
+
+/// Part 6 - write student_info.txt (all registered students) and return it.
+/// It goes to the phone's Documents folder. If that folder cannot be written,
+/// the app's own folder is used instead.
+Future<File> exportStudentFile() async {
+  final students = await loadStudents();
+
+  final blocks = [
+    for (final s in students)
+      'STUDENT INFORMATION\n\n'
+          '${s.entries.map((e) => '${e.key}: ${e.value}').join('\n')}',
+  ];
+  final text = blocks.join('\n\n----------------------------\n\n');
+
+  try {
+    final file = await File('/storage/emulated/0/Documents/student_info.txt')
+        .create(recursive: true);
+    return await file.writeAsString(text);
+  } catch (_) {
+    final directory = await getExternalStorageDirectory() ??
+        await getApplicationDocumentsDirectory();
+    return File('${directory.path}/student_info.txt').writeAsString(text);
+  }
 }
